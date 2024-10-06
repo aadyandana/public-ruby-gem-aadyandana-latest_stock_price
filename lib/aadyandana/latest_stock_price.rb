@@ -28,9 +28,9 @@ module Aadyandana
         @api_key = api_key
         @params = params
 
-        @datetime_attrs = [ "lastUpdateTime" ]
-        @string_meta_attrs = [ "companyName", "industry", "isin" ]
-        @string_attrs = [ "identifier", "symbol" ] + @string_meta_attrs
+        @datetime_attrs = %w[lastUpdateTime]
+        @string_meta_attrs = %w[companyName industry isin]
+        @string_attrs = %w[identifier symbol] + @string_meta_attrs
       end
 
       def price
@@ -73,12 +73,7 @@ module Aadyandana
       end
 
       def get
-        response = self.class.get(
-          "/any",
-          {
-            headers: headers
-          }
-        )
+        response = self.class.get("/any", { headers: headers })
 
         raise Error, "Error fetching data: #{response.message}" unless response.success?
 
@@ -116,13 +111,13 @@ module Aadyandana
             value = value.present? ? value.downcase : "zzz"
           else
             value = value == "-" ? Float::INFINITY : value.to_f
-            value *= -1 if value != Float::INFINITY and type == "desc"
+            value *= -1 if value != Float::INFINITY && type == "desc"
           end
     
           value
         end
     
-        stocks = stocks.reverse! if @string_attrs.include? field and type == "desc"
+        stocks.reverse! if (@string_attrs.include? field) && type == "desc"
     
         stocks
       end

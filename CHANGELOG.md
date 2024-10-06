@@ -8,3 +8,7 @@
 
 - Add filter
 - Add sort
+
+## [2.0.1] - 2024-10-06
+
+- Improve clean code (rubocop)
