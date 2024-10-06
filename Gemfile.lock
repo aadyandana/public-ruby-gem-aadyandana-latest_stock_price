@@ -1,8 +1,8 @@
 PATH
   remote: .
   specs:
-    aadyandana-latest_stock_price (1.1.1)
-      httparty
+    aadyandana-latest_stock_price (2.0.0)
+      httparty (~> 0.22.0)
 
 GEM
   remote: https://rubygems.org/

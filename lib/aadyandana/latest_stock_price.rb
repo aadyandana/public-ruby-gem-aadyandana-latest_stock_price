@@ -27,6 +27,10 @@ module Aadyandana
       def initialize(api_key, params = {})
         @api_key = api_key
         @params = params
+
+        @datetime_attrs = [ "lastUpdateTime" ]
+        @string_meta_attrs = [ "companyName", "industry", "isin" ]
+        @string_attrs = [ "identifier", "symbol" ] + @string_meta_attrs
       end
 
       def price
@@ -45,13 +49,18 @@ module Aadyandana
         
         stocks = get
         stocks = filter(stocks)
+        stocks = sort(stocks, @params[:sort]) if @params[:sort]
         stocks = paginate(stocks, page, limit)
 
         stocks || []
       end
 
       def price_all
-        get
+        stocks = get
+
+        stocks = sort(stocks, @params[:sort]) if @params[:sort]
+
+        stocks
       end
 
       private
@@ -84,12 +93,37 @@ module Aadyandana
       end
 
       def filter(stocks)
-        stocks = stocks.select { |stock| stock[:identifier] == @params[:identifier] } if @params[:identifier]
-        stocks = stocks.select { |stock| stock[:symbol] == @params[:symbol] } if @params[:symbol]
-        stocks = stocks.select { |stock| stock[:meta][:companyName] == @params[:company_name] } if @params[:company_name]
-        stocks = stocks.select { |stock| stock[:meta][:industry] == @params[:industry] } if @params[:industry]
-        stocks = stocks.select { |stock| stock[:meta][:isin] == @params[:isin] } if @params[:isin]
+        stocks = stocks.select { |stock| stock["identifier"] == @params[:identifier] } if @params[:identifier]
+        stocks = stocks.select { |stock| stock["symbol"] == @params[:symbol] } if @params[:symbol]
+        stocks = stocks.select { |stock| stock["meta"]["companyName"] == @params[:company_name] } if @params[:company_name]
+        stocks = stocks.select { |stock| stock["meta"]["industry"] == @params[:industry] } if @params[:industry]
+        stocks = stocks.select { |stock| stock["meta"]["isin"] == @params[:isin] } if @params[:isin]
 
+        stocks
+      end
+    
+      def sort(stocks, sort)
+        field, type = sort.split(".")
+    
+        stocks = stocks.sort_by do |stock|
+          value = stock[field]
+    
+          if @datetime_attrs.include? field
+            value = DateTime.parse(value).to_time.to_i
+            value *= -1 if type == "desc"
+          elsif @string_attrs.include? field
+            value = stock["meta"][field] if @string_meta_attrs.include? field
+            value = value.present? ? value.downcase : "zzz"
+          else
+            value = value == "-" ? Float::INFINITY : value.to_f
+            value *= -1 if value != Float::INFINITY and type == "desc"
+          end
+    
+          value
+        end
+    
+        stocks = stocks.reverse! if @string_attrs.include? field and type == "desc"
+    
         stocks
       end
     end
